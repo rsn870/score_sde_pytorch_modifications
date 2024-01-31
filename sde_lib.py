@@ -163,7 +163,7 @@ class VPSDE(SDE):
     G = sqrt_beta
     return f, G
   
-"""
+
 class VPSDE_IP(SDE):
   def __init__(self, anchors, beta_min=0.1, beta_max=20, N=1000):
     #Construct a Variance Preserving SDE.
@@ -190,8 +190,8 @@ class VPSDE_IP(SDE):
 
   def sde(self, x, t):
     beta_t = self.beta_0 + t * (self.beta_1 - self.beta_0)
-    beta_t_anchors = beta_t*torch.exp(torch.mean((x - self.anchors).pow(2)))
-    beta_t_anchors 
+    beta_t_anchors = beta_t*torch.exp(-torch.mean((x - self.anchors).pow(2)))*0.5
+    beta_t = beta_t_anchors + 0.5*beta_t
     drift = -0.5 * beta_t[:, None, None, None] * x 
     diffusion = torch.sqrt(beta_t)
     return drift, diffusion
@@ -215,13 +215,16 @@ class VPSDE_IP(SDE):
     #DDPM discretization.
     timestep = (t * (self.N - 1) / self.T).long()
     beta = self.discrete_betas.to(x.device)[timestep]
-    alpha = self.alphas.to(x.device)[timestep]
+    beta_anchors = beta*torch.exp(-torch.mean((x - self.anchors).pow(2)))*0.5
+    beta = beta_anchors + 0.5*beta
+    alpha = 1. - beta
+    #alpha = self.alphas.to(x.device)[timestep]
     sqrt_beta = torch.sqrt(beta)
     f = torch.sqrt(alpha)[:, None, None, None] * x - x
     G = sqrt_beta
     return f, G
   
-"""
+
 class VPSDE_Sin(SDE):
   def __init__(self, beta_min=0.1, beta_max=20, N=1000):
     """Construct a Variance Preserving SDE.
