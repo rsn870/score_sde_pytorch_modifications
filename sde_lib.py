@@ -259,7 +259,11 @@ class VPSDE_Sin(SDE):
     return drift, diffusion
 
   def marginal_prob(self, x, t):
-    log_mean_coeff = -0.25 * t ** 2 * (self.beta_1 - self.beta_0) - 0.5 * t * self.beta_0
+    log_mean_coeff = -0.25 * t ** 2 * (self.beta_1/2. - self.beta_0/2.) - 0.5 * t * self.beta_0/2.0
+    log_sin_coeff = -(self.beta_1/2. - self.beta_0/2.)*(4*torch.sin((t*np.pi)/2.)/(np.pi*np.pi) -2*t*torch.cos((t*np.pi)/2.)/np.pi)
+    log_sin_coeff = log_sin_coeff - self.beta_0*torch.cos((t*np.pi)/2.)/(np.pi)
+    log_mean_coeff = log_mean_coeff + log_sin_coeff
+
     mean = torch.exp(log_mean_coeff[:, None, None, None]) * x
     std = torch.sqrt(1. - torch.exp(2. * log_mean_coeff))
     return mean, std
